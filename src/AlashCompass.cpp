@@ -60,10 +60,25 @@ bool AlashCompass::probe() {
     }
     first = ERR_WRONG_CHIP;
   }
-  // Новый чип QMC5883P на адресе 0x2C на платах GY-271 тоже встречается; он здесь не поддерживается
+  // QMC5883P (новые платы GY-271 / GY-273): адрес 0x2C, регистр идентификатора 0x00 содержит 0x80
   _addr = 0x2C;
   _wire->beginTransmission(_addr);
-  if (_wire->endTransmission() == 0) first = ERR_WRONG_CHIP;
+  if (_wire->endTransmission() == 0) {
+    uint8_t id = 0;
+    if (readBytes(0x00, &id, 1) && id == 0x80) {
+      write8(0x0B, 0x80);                    // программный сброс
+      delay(50);
+      // диапазон ±8 Гс (3750 единиц на гаусс), SET/RESET включён; затем режим: непрерывный, 50 Гц, усреднение 8
+      if (!write8(0x0B, (2 << 2) | 0) || !write8(0x0A, (0 << 6) | (0 << 4) | (1 << 2) | 3)) {
+        _err = ERR_I2C;
+        return false;
+      }
+      _chip = CHIP_QMC5883P;
+      _err = ERR_OK;
+      return true;
+    }
+    first = ERR_WRONG_CHIP;
+  }
   _err = first;
   return false;
 }
@@ -74,7 +89,7 @@ bool AlashCompass::isConnected() {
 }
 
 const __FlashStringHelper *AlashCompass::chipName() const {
-  return _chip == CHIP_QMC5883L ? F("QMC5883L") : _chip == CHIP_HMC5883L ? F("HMC5883L") : F("-");
+  return _chip == CHIP_QMC5883L ? F("QMC5883L") : _chip == CHIP_HMC5883L ? F("HMC5883L") : _chip == CHIP_QMC5883P ? F("QMC5883P") : F("-");
 }
 
 // ---- I2C -------------------------------------------------------------------------
@@ -103,7 +118,7 @@ bool AlashCompass::sample(float *v) {
   }
   uint8_t b[6], st = 0;
   for (uint8_t tries = 0; tries < 20; tries++) {          // ждём готовности данных до ~20 мс
-    uint8_t reg = _chip == CHIP_QMC5883L ? 0x06 : 0x09;
+    uint8_t reg = _chip == CHIP_QMC5883L ? 0x06 : 0x09;       // статус: QMC5883L 0x06, HMC5883L и QMC5883P 0x09
     if (!readBytes(reg, &st, 1)) {
       _err = ERR_I2C;
       return false;
@@ -111,13 +126,22 @@ bool AlashCompass::sample(float *v) {
     if (st & 0x01) break;
     delay(1);
   }
-  if (!readBytes(_chip == CHIP_QMC5883L ? 0x00 : 0x03, b, 6)) {
+  if (!readBytes(_chip == CHIP_QMC5883L ? 0x00 : _chip == CHIP_QMC5883P ? 0x01 : 0x03, b, 6)) {
     _err = ERR_I2C;
     return false;
   }
   int16_t rx, ry, rz;
   float perLsb;                                             // мкТл на единицу
-  if (_chip == CHIP_QMC5883L) {
+  if (_chip == CHIP_QMC5883P) {
+    rx = (int16_t)(b[1] << 8 | b[0]);                       // X, Y, Z, младший байт первый
+    ry = (int16_t)(b[3] << 8 | b[2]);
+    rz = (int16_t)(b[5] << 8 | b[4]);
+    perLsb = 100.0f / 3750.0f;                              // ±8 Гс: 3750 единиц на гаусс
+    if (st & 0x02) {                                         // OVFL: сигнал за пределами диапазона
+      _err = ERR_OVERFLOW;
+      return false;
+    }
+  } else if (_chip == CHIP_QMC5883L) {
     rx = (int16_t)(b[1] << 8 | b[0]);
     ry = (int16_t)(b[3] << 8 | b[2]);
     rz = (int16_t)(b[5] << 8 | b[4]);
@@ -274,13 +298,13 @@ const __FlashStringHelper *AlashCompass::errorText() {
   switch (_err) {
     case ERR_OK: return F("OK");
     case ERR_NO_DEVICE:
-      return T("Компас не найден: проверьте SDA / SCL, питание (3.3-5 В) и GND. Нужен QMC5883L (адрес 0x0D) или HMC5883L (0x1E)",
-               "Компас табылмады: SDA / SCL, қуатты (3.3-5 В) және GND тексеріңіз. QMC5883L (0x0D) не HMC5883L (0x1E) керек",
-               "Compass not found: check SDA / SCL, power (3.3-5 V) and GND. A QMC5883L (address 0x0D) or HMC5883L (0x1E) is required");
+      return T("Компас не найден: проверьте SDA / SCL, питание (3.3-5 В) и GND. Нужен QMC5883L (адрес 0x0D), HMC5883L (0x1E) или QMC5883P (0x2C)",
+               "Компас табылмады: SDA / SCL, қуатты (3.3-5 В) және GND тексеріңіз. QMC5883L (0x0D), HMC5883L (0x1E) не QMC5883P (0x2C) керек",
+               "Compass not found: check SDA / SCL, power (3.3-5 V) and GND. A QMC5883L (address 0x0D), HMC5883L (0x1E) or QMC5883P (0x2C) is required");
     case ERR_WRONG_CHIP:
-      return T("На плате другая микросхема (возможно, QMC5883P на адресе 0x2C): эта библиотека её не поддерживает",
-               "Тақтада басқа микросхема (мүмкін 0x2C мекенжайындағы QMC5883P): бұл кітапхана оны қолдамайды",
-               "The board has another chip (possibly a QMC5883P at 0x2C): this library does not support it");
+      return T("По адресу компаса (0x0D, 0x1E или 0x2C) отвечает неизвестная микросхема: это не QMC5883L, HMC5883L и не QMC5883P. Возможно, это другая плата на той же шине",
+               "Компас мекенжайында (0x0D, 0x1E немесе 0x2C) белгісіз микросхема жауап береді: бұл QMC5883L, HMC5883L және QMC5883P емес. Мүмкін, сол шинадағы басқа тақта",
+               "An unknown chip answers at a compass address (0x0D, 0x1E or 0x2C): it is not a QMC5883L, HMC5883L or QMC5883P. It may be another board on the same bus");
     case ERR_I2C:
       return T("Ошибка I2C: проверьте контакты и подтяжку линий", "I2C қатесі: байланысты және тартқыш резисторларды тексеріңіз",
                "I2C error: check connections and pull-up resistors");
@@ -307,7 +331,7 @@ void AlashCompass::diagnose(Print &out) {
       out.print(a, HEX);
       if (a == 0x0D) out.print(F("  QMC5883L"));
       else if (a == 0x1E) out.print(F("  HMC5883L"));
-      else if (a == 0x2C) out.print(F("  QMC5883P (не поддерживается)"));
+      else if (a == 0x2C) out.print(F("  QMC5883P"));
       else if (a == 0x68) out.print(F("  MPU6050 / DS3231"));
       out.println();
     }

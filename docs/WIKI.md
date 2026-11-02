@@ -6,7 +6,7 @@
 
 ## Русский
 
-Простая библиотека для магнитного компаса **QMC5883L и HMC5883L** (модуль **GY-271**): курс 0-360 градусов, сторона света словами («Север», «Юго-запад») и калибровка вращением платы. Сама определяет, какая микросхема стоит на плате (на GY-271 бывают обе). Только встроенная `Wire`. Сделана для уроков, роботов и наборов Alash Electronics.
+Простая библиотека для магнитного компаса **QMC5883L, HMC5883L и QMC5883P** (модуль **GY-271**): курс 0-360 градусов, сторона света словами («Север», «Юго-запад») и калибровка вращением платы. Сама определяет, какая микросхема стоит на плате (на GY-271 бывают обе). Только встроенная `Wire`. Сделана для уроков, роботов и наборов Alash Electronics.
 
 ### Установка
 Arduino IDE: Скетч, Подключить библиотеку, Управлять библиотеками, найти **AlashCompass** и нажать Установить. Или скачайте ZIP с GitHub: Скетч, Подключить библиотеку, Добавить .ZIP библиотеку.
@@ -38,6 +38,7 @@ void loop() {
 ```
 
 ### Что умеет
+- **Любая плата GY-271:** старая на QMC5883L (0x0D), на HMC5883L (0x1E) и новая на **QMC5883P (0x2C)** определяются сами.
 - **Сама определяет чип:** QMC5883L (0x0D) или HMC5883L (0x1E). Порядок осей и масштаб учтены, пользователь получает одинаковые значения.
 - **Курс и стороны света:** `heading()` 0-360, `direction()` словами и `directionShort()` (С, СВ, В...) на русском, казахском и английском.
 - **Калибровка вращением:** `calibrate()` находит смещение и растяжение осей от железа рядом; `printCalibration()` печатает готовую строку для вставки в скетч. В тесте ошибка курса падает с 39 до 0.03 градуса.
@@ -72,7 +73,11 @@ void loop() {
 
 **Компас не найден, хотя плата подключена**
 
-Выполните пример Diagnose. Новые платы GY-271 бывают с чипом QMC5883P (адрес 0x2C): он не поддерживается этой библиотекой.
+Выполните пример Diagnose. Проверьте питание (3.3-5 В), SDA / SCL и общий GND. Платы GY-271 бывают с тремя микросхемами (QMC5883L 0x0D, HMC5883L 0x1E, QMC5883P 0x2C): все три поддерживаются, Diagnose покажет, какой адрес отвечает.
+
+**Новый модуль GY-271 «не находится» другими библиотеками**
+
+В новых партиях GY-271 и GY-273 вместо QMC5883L стоит QMC5883P с адресом 0x2C. Эта библиотека находит и его: `begin()` сам определит микросхему, а `chipName()` покажет «QMC5883P». Курс по осям у P может идти в другую сторону: если так, `invertHeading()` или `setHeadingOffset(90)`.
 
 ### Самопроверка
 В библиотеке есть `diagnose(Serial)`: она печатает, что видит плата, и подсказывает, что проверить. Язык подсказок: `setLanguage(LANG_RU / LANG_KK / LANG_EN)`.
@@ -116,6 +121,7 @@ void loop() {
 ```
 
 ### Мүмкіндіктері
+- **Кез келген GY-271 тақтасы:** ескі QMC5883L (0x0D), HMC5883L (0x1E) және жаңа **QMC5883P (0x2C)** өзі анықталады.
 - **Чипті өзі анықтайды:** QMC5883L (0x0D) не HMC5883L (0x1E).
 - **Бағыт және жақтар:** `heading()` 0-360, `direction()` сөзбен, `directionShort()` үш тілде.
 - **Айналдыру арқылы калибрлеу:** `calibrate()`; `printCalibration()` дайын жолды шығарады.
@@ -152,6 +158,10 @@ void loop() {
 
 Diagnose мысалын іске қосыңыз. Жаңа GY-271 тақталарында QMC5883P (0x2C) болады: қолдау жоқ.
 
+**Жаңа GY-271 модулін басқа кітапханалар «таппайды»**
+
+GY-271 және GY-273 жаңа партияларында QMC5883L орнына 0x2C мекенжайлы QMC5883P тұрады. Бұл кітапхана оны да табады: `begin()` микросхеманы өзі анықтайды, ал `chipName()` «QMC5883P» көрсетеді. P-да бағыт басқа жаққа жүруі мүмкін: олай болса `invertHeading()` немесе `setHeadingOffset(90)`.
+
 ### Өзін-өзі тексеру
 Кітапханада `diagnose(Serial)` бар: тақта не көргенін басып шығарады және нені тексеру керегін айтады. Кеңес тілі: `setLanguage(LANG_RU / LANG_KK / LANG_EN)`.
 
@@ -162,7 +172,7 @@ Diagnose мысалын іске қосыңыз. Жаңа GY-271 тақтала�
 
 ## English
 
-A simple library for the **QMC5883L and HMC5883L** magnetic compass (**GY-271** module): heading 0-360 degrees, the direction in words ("North", "South-west") and calibration by rotating the board. It tells which chip is on the board (GY-271 boards come with either). Only the built-in `Wire`. Made for classes, robots and Alash Electronics kits.
+A simple library for the **QMC5883L, HMC5883L and QMC5883P** magnetic compass (**GY-271** module): heading 0-360 degrees, the direction in words ("North", "South-west") and calibration by rotating the board. It tells which chip is on the board (GY-271 boards come with either). Only the built-in `Wire`. Made for classes, robots and Alash Electronics kits.
 
 ### Installation
 Arduino IDE: Sketch, Include Library, Manage Libraries, search **AlashCompass** and click Install. Or download the ZIP from GitHub: Sketch, Include Library, Add .ZIP Library.
@@ -194,6 +204,7 @@ void loop() {
 ```
 
 ### Features
+- **Any GY-271 board:** the old ones on a QMC5883L (0x0D), an HMC5883L (0x1E) and the new ones on a **QMC5883P (0x2C)** are detected automatically.
 - **Detects the chip itself:** QMC5883L (0x0D) or HMC5883L (0x1E). Axis order and scale are handled, so the user gets identical values.
 - **Heading and directions:** `heading()` 0-360, `direction()` in words and `directionShort()` (N, NE, E...) in Russian, Kazakh and English.
 - **Calibration by rotation:** `calibrate()` finds the offset and axis stretch caused by nearby iron; `printCalibration()` prints a line to paste into your sketch. In the test the heading error drops from 39 to 0.03 degrees.
@@ -228,7 +239,11 @@ Call `compass.invertHeading()`. If north is off by a constant angle, use `setHea
 
 **The compass is not found though connected**
 
-Run the Diagnose example. Newer GY-271 boards carry a QMC5883P (address 0x2C): not supported by this library.
+Run the Diagnose example. Check the power (3.3-5 V), SDA / SCL and a common GND. GY-271 boards come with three chips (QMC5883L 0x0D, HMC5883L 0x1E, QMC5883P 0x2C): all three are supported, Diagnose shows which address answers.
+
+**The new GY-271 module is "not found" by other libraries**
+
+Newer batches of the GY-271 and GY-273 carry a QMC5883P with address 0x2C instead of the QMC5883L. This library finds it too: `begin()` detects the chip itself and `chipName()` shows "QMC5883P". The heading of the P may run the other way: if so use `invertHeading()` or `setHeadingOffset(90)`.
 
 ### Self-check
 The library has `diagnose(Serial)`: it prints what the board sees and tells what to check. Tips language: `setLanguage(LANG_RU / LANG_KK / LANG_EN)`.

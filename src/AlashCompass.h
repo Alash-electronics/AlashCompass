@@ -1,4 +1,4 @@
-// AlashCompass: магнитный компас QMC5883L и HMC5883L (модуль GY-271): курс 0-360 градусов, стороны света, калибровка вращением.
+// AlashCompass: магнитный компас QMC5883L, HMC5883L и новый QMC5883P (модуль GY-271 / GY-273): курс 0-360 градусов, стороны света, калибровка вращением.
 // Без зависимостей, только встроенная Wire. MIT License. Alash Electronics, https://github.com/Alash-electronics/AlashCompass
 #ifndef ALASH_COMPASS_H
 #define ALASH_COMPASS_H
@@ -8,11 +8,11 @@
 
 class AlashCompass {
  public:
-  enum Chip : uint8_t { CHIP_NONE = 0, CHIP_QMC5883L, CHIP_HMC5883L };
+  enum Chip : uint8_t { CHIP_NONE = 0, CHIP_QMC5883L, CHIP_HMC5883L, CHIP_QMC5883P };
   enum Error : uint8_t {
     ERR_OK = 0,
-    ERR_NO_DEVICE,     // на шине I2C нет компаса (адреса 0x0D и 0x1E)
-    ERR_WRONG_CHIP,    // отвечает другая микросхема (например, QMC5883P, которая не поддерживается)
+    ERR_NO_DEVICE,     // на шине I2C нет компаса (адреса 0x0D, 0x1E и 0x2C)
+    ERR_WRONG_CHIP,    // по адресу компаса отвечает другая, неизвестная микросхема
     ERR_I2C,           // ошибка чтения или записи по I2C
     ERR_OVERFLOW,      // поле слишком сильное для датчика: рядом магнит или мотор
     ERR_NOT_ROTATED    // при калибровке датчик не повернули на полный круг
@@ -20,7 +20,7 @@ class AlashCompass {
   enum Language : uint8_t { LANG_RU = 0, LANG_KK = 1, LANG_EN = 2 };
 
   // ---- Запуск --------------------------------------------------------------
-  // begin() сам определяет микросхему на плате GY-271: QMC5883L (адрес 0x0D) или HMC5883L (0x1E).
+  // begin() сам определяет микросхему на плате GY-271: QMC5883L (адрес 0x0D), HMC5883L (0x1E) или новый QMC5883P (0x2C).
   bool begin(TwoWire &wire = Wire, bool startWire = true);
 #if defined(ESP32) || defined(ESP8266)
   bool begin(int sdaPin, int sclPin);

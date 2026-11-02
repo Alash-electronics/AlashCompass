@@ -1,8 +1,8 @@
 {
   "name": "AlashCompass",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Easy QMC5883L/HMC5883L (GY-271) compass library: heading, directions in words, rotation calibration, clear tips (ru/kk/en), no dependencies",
-  "keywords": "compass, QMC5883L, HMC5883L, GY-271, magnetometer, heading, I2C",
+  "keywords": "compass, QMC5883L, HMC5883L, GY-271, magnetometer, heading, I2C, QMC5883P, GY-273",
   "repository": {
     "type": "git",
     "url": "https://github.com/Alash-electronics/AlashCompass"

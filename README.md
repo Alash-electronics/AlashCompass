@@ -6,7 +6,7 @@
 
 ## Русский
 
-Простая библиотека для магнитного компаса **QMC5883L и HMC5883L** (модуль **GY-271**): курс 0-360 градусов, сторона света словами («Север», «Юго-запад») и калибровка вращением платы. Сама определяет, какая микросхема стоит на плате (на GY-271 бывают обе). Только встроенная `Wire`. Сделана для уроков, роботов и наборов Alash Electronics.
+Простая библиотека для магнитного компаса **QMC5883L, HMC5883L и QMC5883P** (модуль **GY-271**): курс 0-360 градусов, сторона света словами («Север», «Юго-запад») и калибровка вращением платы. Сама определяет, какая микросхема стоит на плате (на GY-271 бывают обе). Только встроенная `Wire`. Сделана для уроков, роботов и наборов Alash Electronics.
 
 ```cpp
 #include <AlashCompass.h>
@@ -21,6 +21,7 @@ void loop() {
 ```
 
 ### Что умеет
+- **Любая плата GY-271:** старая на QMC5883L (0x0D), на HMC5883L (0x1E) и новая на **QMC5883P (0x2C)** определяются сами.
 - **Сама определяет чип:** QMC5883L (0x0D) или HMC5883L (0x1E). Порядок осей и масштаб учтены, пользователь получает одинаковые значения.
 - **Курс и стороны света:** `heading()` 0-360, `direction()` словами и `directionShort()` (С, СВ, В...) на русском, казахском и английском.
 - **Калибровка вращением:** `calibrate()` находит смещение и растяжение осей от железа рядом; `printCalibration()` печатает готовую строку для вставки в скетч. В тесте ошибка курса падает с 39 до 0.03 градуса.
@@ -50,7 +51,7 @@ void loop() {
 `Basic`, `Calibrate`, `Direction`, `Diagnose`, `ESP32_CustomPins`
 
 ### Тесты
-Оба чипа с разным порядком байтов и осей, масштаб в мкТл, восемь сторон света на всех четырёх октантах, склонение и переход через 360, сглаживание, калибровка на имитации вращения с железом рядом (ошибка с 39 до 0.03 градуса), переполнение, чужая микросхема проверены без железа: `extras/test`.
+Оба чипа с разным порядком байтов и осей, масштаб в мкТл, восемь сторон света на всех четырёх октантах, склонение и переход через 360, сглаживание, калибровка на имитации вращения с железом рядом (ошибка с 39 до 0.03 градуса), переполнение, чужая микросхема проверены без железа: `extras/test`. Версия 1.1.0: QMC5883P (определение по идентификатору 0x80, порядок записи при настройке, данные и масштаб 3750 единиц на гаусс, переполнение, чужая микросхема на 0x2C).
 
 Подробное руководство: [docs/WIKI.md](docs/WIKI.md).
 
@@ -73,6 +74,7 @@ void loop() {
 ```
 
 ### Мүмкіндіктері
+- **Кез келген GY-271 тақтасы:** ескі QMC5883L (0x0D), HMC5883L (0x1E) және жаңа **QMC5883P (0x2C)** өзі анықталады.
 - **Чипті өзі анықтайды:** QMC5883L (0x0D) не HMC5883L (0x1E).
 - **Бағыт және жақтар:** `heading()` 0-360, `direction()` сөзбен, `directionShort()` үш тілде.
 - **Айналдыру арқылы калибрлеу:** `calibrate()`; `printCalibration()` дайын жолды шығарады.
@@ -102,7 +104,7 @@ QMC5883L (mprograms), QMC5883LCompass, HMC5883L (jarzebski) және Adafruit HM
 `Basic`, `Calibrate`, `Direction`, `Diagnose`, `ESP32_CustomPins`
 
 ### Тесттер
-Екі чип, масштаб, сегіз жақ, ауытқу, тегістеу, айналдыру арқылы калибрлеу, толу, бөтен микросхема тексерілген: `extras/test`.
+Екі чип, масштаб, сегіз жақ, ауытқу, тегістеу, айналдыру арқылы калибрлеу, толу, бөтен микросхема тексерілген: `extras/test`. 1.1.0 нұсқасы: QMC5883P (0x80 идентификаторы бойынша анықтау, баптау реті, деректер, толып кету).
 
 Толық нұсқаулық: [docs/WIKI.md](docs/WIKI.md).
 
@@ -110,7 +112,7 @@ QMC5883L (mprograms), QMC5883LCompass, HMC5883L (jarzebski) және Adafruit HM
 
 ## English
 
-A simple library for the **QMC5883L and HMC5883L** magnetic compass (**GY-271** module): heading 0-360 degrees, the direction in words ("North", "South-west") and calibration by rotating the board. It tells which chip is on the board (GY-271 boards come with either). Only the built-in `Wire`. Made for classes, robots and Alash Electronics kits.
+A simple library for the **QMC5883L, HMC5883L and QMC5883P** magnetic compass (**GY-271** module): heading 0-360 degrees, the direction in words ("North", "South-west") and calibration by rotating the board. It tells which chip is on the board (GY-271 boards come with either). Only the built-in `Wire`. Made for classes, robots and Alash Electronics kits.
 
 ```cpp
 #include <AlashCompass.h>
@@ -125,6 +127,7 @@ void loop() {
 ```
 
 ### Features
+- **Any GY-271 board:** the old ones on a QMC5883L (0x0D), an HMC5883L (0x1E) and the new ones on a **QMC5883P (0x2C)** are detected automatically.
 - **Detects the chip itself:** QMC5883L (0x0D) or HMC5883L (0x1E). Axis order and scale are handled, so the user gets identical values.
 - **Heading and directions:** `heading()` 0-360, `direction()` in words and `directionShort()` (N, NE, E...) in Russian, Kazakh and English.
 - **Calibration by rotation:** `calibrate()` finds the offset and axis stretch caused by nearby iron; `printCalibration()` prints a line to paste into your sketch. In the test the heading error drops from 39 to 0.03 degrees.
@@ -154,7 +157,7 @@ We looked at QMC5883L (mprograms), QMC5883LCompass, HMC5883L (jarzebski) and Ada
 `Basic`, `Calibrate`, `Direction`, `Diagnose`, `ESP32_CustomPins`
 
 ### Tests
-Both chips with different byte and axis order, scale in uT, eight directions in all octants, declination and 360 wrap, smoothing, calibration on a simulated rotation with iron nearby (error from 39 to 0.03 degrees), overflow and a foreign chip are checked without hardware: `extras/test`.
+Both chips with different byte and axis order, scale in uT, eight directions in all octants, declination and 360 wrap, smoothing, calibration on a simulated rotation with iron nearby (error from 39 to 0.03 degrees), overflow and a foreign chip are checked without hardware: `extras/test`. Version 1.1.0: QMC5883P (detection by the 0x80 identifier, the configuration write order, data and the 3750 LSB per gauss scale, overflow, a foreign chip at 0x2C).
 
 Full guide: [docs/WIKI.md](docs/WIKI.md).
 

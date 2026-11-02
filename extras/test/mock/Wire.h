@@ -6,6 +6,8 @@ struct FakeCompass {
   float fx = 20, fy = 0, fz = 40;     // магнитное поле, мкТл
   bool overflow = false;
   uint8_t ctrl1 = 0;
+  bool qmcp = false;                 // QMC5883P на адресе 0x2C
+  uint8_t pc1 = 0, pc2 = 0; int pWrites = 0; uint8_t pOrder[8]; bool pReset = false;
 };
 inline FakeCompass g_cmp;
 class TwoWire {
@@ -13,7 +15,11 @@ class TwoWire {
   void begin() {}
   void begin(int, int) {}
   void beginTransmission(uint8_t a) { _a = a; _n = 0; }
-  size_t write(uint8_t v) { if (_n == 0) _reg = v; else if (_a == 0x0D && _reg == 0x09) g_cmp.ctrl1 = v; _n++; return 1; }
+  size_t write(uint8_t v) {
+    if (_n == 0) _reg = v;
+    else if (_a == 0x0D && _reg == 0x09) g_cmp.ctrl1 = v;
+    else if (_a == 0x2C && g_cmp.qmcp) { if (_reg == 0x0A) g_cmp.pc1 = v; if (_reg == 0x0B) { g_cmp.pc2 = v; if (v & 0x80) g_cmp.pReset = true; } if (g_cmp.pWrites < 8) g_cmp.pOrder[g_cmp.pWrites++] = _reg; }
+    _n++; return 1; }
   uint8_t endTransmission(bool = true) { return (g_cmp.present && _a == g_cmp.addr) ? 0 : 2; }
   uint8_t requestFrom(uint8_t a, uint8_t len) {
     if (!(g_cmp.present && a == g_cmp.addr)) return 0;
@@ -26,6 +32,17 @@ class TwoWire {
   static int16_t cnt(float uT, float lsbPerGauss) { float c = uT / 100.0f * lsbPerGauss; if (c > 32767) c = 32767; if (c < -32768) c = -32768; return (int16_t)lroundf(c); }
   uint8_t reg(uint8_t r) {
     if (g_cmp.foreign) return r == 0x0D ? 0x00 : 0x00;
+    if (g_cmp.qmcp && g_cmp.addr == 0x2C) {
+      int16_t x = cnt(g_cmp.fx, 3750), y = cnt(g_cmp.fy, 3750), z = cnt(g_cmp.fz, 3750);
+      switch (r) {
+        case 0x00: return 0x80;
+        case 0x01: return x & 0xFF; case 0x02: return (x >> 8) & 0xFF;
+        case 0x03: return y & 0xFF; case 0x04: return (y >> 8) & 0xFF;
+        case 0x05: return z & 0xFF; case 0x06: return (z >> 8) & 0xFF;
+        case 0x09: return 0x01 | (g_cmp.overflow ? 0x02 : 0);
+      }
+      return 0;
+    }
     if (g_cmp.qmc && g_cmp.addr == 0x0D) {
       int16_t x = cnt(g_cmp.fx, 3000), y = cnt(g_cmp.fy, 3000), z = cnt(g_cmp.fz, 3000);
       switch (r) {

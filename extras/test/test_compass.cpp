@@ -2,6 +2,7 @@
 //   g++ -std=c++17 -Wall -I mock -I ../../src test_compass.cpp ../../src/AlashCompass.cpp && ./a.out
 #include <initializer_list>
 #include <stdio.h>
+#include <string>
 #include "Arduino.h"
 #include "Wire.h"
 #include "AlashCompass.h"
@@ -112,6 +113,23 @@ int main() {
   g.setLanguage(AlashCompass::LANG_EN); g.diagnose(*(new Print));
   field(300, 0, 0); g.diagnose(*(new Print));                              // слишком сильное поле: подсказка
   CHECK(kk != nullptr);
+
+  // 11) QMC5883P (новые платы GY-271): адрес 0x2C, идентификатор 0x80, регистры данных 0x01..0x06, 3750 единиц на гаусс
+  { reset(); g_cmp.qmcp = true; g_cmp.addr = 0x2C; g_cmp.fx = 20; g_cmp.fy = 10; g_cmp.fz = 40;
+    AlashCompass c; CHECK(c.begin() && c.chip() == AlashCompass::CHIP_QMC5883P && c.address() == 0x2C && strcmp((const char *)c.chipName(), "QMC5883P") == 0);
+    CHECK(g_cmp.pReset && g_cmp.pOrder[0] == 0x0B && g_cmp.pOrder[1] == 0x0B && g_cmp.pOrder[2] == 0x0A);       // сброс, затем диапазон, затем режим
+    CHECK(((g_cmp.pc2 >> 2) & 3) == 2 && (g_cmp.pc1 & 3) == 3);                                               // ±8 Гс и непрерывный режим
+    CHECK(c.update() && fabsf(c.x() - 20) < 0.1f && fabsf(c.y() - 10) < 0.1f && fabsf(c.z() - 40) < 0.1f);
+    CHECK(fabsf(c.fieldStrength() - sqrtf(20 * 20 + 10 * 10 + 40 * 40)) < 0.2f);
+    g_cmp.fx = 0; g_cmp.fy = 30; g_cmp.fz = 0; c.setSmoothing(1); CHECK(fabsf(c.heading() - 90) < 1.0f);        // поле вдоль Y: 90 градусов
+    g_cmp.overflow = true; CHECK(!c.update() && c.error() == AlashCompass::ERR_OVERFLOW);
+    g_cmp.overflow = false; g_cmp.fx = 25; g_cmp.fy = 0; CHECK(fabsf(c.heading() - 0) < 1.0f || fabsf(c.heading() - 360) < 1.0f);
+    // чужая микросхема на 0x2C (идентификатор не 0x80)
+    reset(); g_cmp.addr = 0x2C; g_cmp.foreign = true; AlashCompass w; CHECK(!w.begin() && w.error() == AlashCompass::ERR_WRONG_CHIP);
+    // диагностика
+    reset(); g_cmp.qmcp = true; g_cmp.addr = 0x2C; AlashCompass d; d.begin(); d.setLanguage(AlashCompass::LANG_EN); Print p; d.diagnose(p);
+    CHECK(p.text.find("QMC5883P") != std::string::npos);
+  }
 
   if (fails) { printf("FAILED: %d\n", fails); return 1; }
   printf("ALL TESTS PASSED\n");
