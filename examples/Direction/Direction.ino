@@ -1,5 +1,9 @@
-// AlashCompass: «в какую сторону смотрит плата». Печатает сторону света при каждой смене, а не 100 раз в секунду.
-// Удобно для робота, который должен ехать на север. setLanguage меняет язык названий.
+// [ru] AlashCompass: «в какую сторону смотрит плата». Печатает сторону света при каждой смене, а не 100 раз в секунду.
+//      Удобно для робота, который должен ехать на север. setLanguage меняет язык названий.
+// [kk] AlashCompass: «тақта қай жаққа қарайды». Әлем тарапын секундына 100 рет емес, әр өзгерген сайын басып шығарады.
+//      Солтүстікке жүруі керек робот үшін ыңғайлы. setLanguage атаулар тілін өзгертеді.
+// [en] AlashCompass: "which way the board faces". Prints the compass direction on every change, not 100 times a second.
+//      Handy for a robot that must drive north. setLanguage changes the language of the names.
 #include <AlashCompass.h>
 
 AlashCompass compass;

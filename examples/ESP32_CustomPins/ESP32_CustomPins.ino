@@ -1,4 +1,6 @@
-// AlashCompass на ESP32 со своими пинами I2C: begin(SDA, SCL).
+// [ru] AlashCompass на ESP32 со своими пинами I2C: begin(SDA, SCL).
+// [kk] AlashCompass ESP32-де өз I2C пиндерімен: begin(SDA, SCL).
+// [en] AlashCompass on ESP32 with its own I2C pins: begin(SDA, SCL).
 #include <AlashCompass.h>
 
 AlashCompass compass;
